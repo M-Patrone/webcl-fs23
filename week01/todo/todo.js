@@ -4,16 +4,57 @@
 
 const TodoController = () => {
 
-    const Todo = () => {                                // facade
-        const textAttr = Observable("text");            // we currently don't expose it as we don't use it elsewhere
+    const Validator = (val,errorMsg)=>{
+        const checkValue = (curVal)=>{
+                return val(curVal)
+            }
+        return {
+            getMessage: ()=>errorMsg,
+            isValid: (curVal) => checkValue(curVal)
+        }
+    }
+    const Property = () =>{
+        const propertyValue = Observable();
+        const validators = [];
+        const errorMessage = ""
+        return {
+            setValidator: val => validators.push(val),
+            getValue: ()=> propertyValue,
+            getValidators: () => validators,
+            setValue: (val)=>{
+                propertyValue.setValue(val);
+            },
+            getError: ()=>{
+                let s="";
+                validators.forEach(v=>{
+                    if(!v.isValid(propertyValue.getValue())){
+                        s += v.getMessage();
+                    }
+                })
+                return s;
+            }
+        }
+
+    }
+
+    const Todo = () => {
+        const textAttr = Property();
+        textAttr.setValue("text");
+
+        const val = Validator((v=>v.length>3),"Der Text ist nicht genug lang")
+
+        textAttr.setValidator(val);
+        // facade
+        //const textAttr = Observable("text");            // we currently don't expose it as we don't use it elsewhere
         const doneAttr = Observable(false);
         return {
             getDone:       doneAttr.getValue,
             setDone:       doneAttr.setValue,
             onDoneChanged: doneAttr.onChange,
             setText:       textAttr.setValue,
-            getText:       textAttr.getValue,
-            onTextChanged: textAttr.onChange,
+            getText:       textAttr.getValue().getValue,
+            onTextChanged: textAttr.getValue().onChange,
+            getErrorMsg: textAttr.getError
         }
     };
 
@@ -66,28 +107,37 @@ const TodoItemsView = (todoController, rootElement) => {
             template.innerHTML = `
                 <button class="delete">&times;</button>
                 <input type="text" size="42">
-                <input type="checkbox">            
+                <input type="checkbox">  
+                <b style="color:red; width: 100vw" ></b>          
             `;
             return template.children;
         }
-        const [deleteButton, inputElement, checkboxElement] = createElements();
+        const [deleteButton, inputElement, checkboxElement, errorMsg] = createElements();
 
         checkboxElement.onclick = _ => todo.setDone(checkboxElement.checked);
         deleteButton.onclick    = _ => todoController.removeTodo(todo);
+
+        inputElement.oninput = _ => todo.setText(inputElement.value);
+
 
         todoController.onTodoRemove( (removedTodo, removeMe) => {
             if (removedTodo !== todo) return;
             rootElement.removeChild(inputElement);
             rootElement.removeChild(deleteButton);
             rootElement.removeChild(checkboxElement);
+            rootElement.removeChild(errorMsg)
             removeMe();
         } );
 
-        todo.onTextChanged(() => inputElement.value = todo.getText());
+        todo.onTextChanged(() => {
+            inputElement.value = todo.getText();
+            errorMsg.textContent = todo.getErrorMsg();
+        });
 
         rootElement.appendChild(deleteButton);
         rootElement.appendChild(inputElement);
         rootElement.appendChild(checkboxElement);
+        rootElement.appendChild(errorMsg);
     };
 
     // binding
