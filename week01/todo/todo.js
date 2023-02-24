@@ -39,11 +39,17 @@ const TodoController = () => {
 
     const Todo = () => {
         const textAttr = Property();
-        textAttr.setValue("text");
 
         const val = Validator((v=>v.length>3),"Der Text ist nicht genug lang")
 
         textAttr.setValidator(val);
+        const decoratedValue = (val)=>{
+            const modifiedValue = val.toUpperCase();
+            textAttr.setValue(modifiedValue);
+        }
+
+        decoratedValue("text")
+
         // facade
         //const textAttr = Observable("text");            // we currently don't expose it as we don't use it elsewhere
         const doneAttr = Observable(false);
@@ -51,7 +57,7 @@ const TodoController = () => {
             getDone:       doneAttr.getValue,
             setDone:       doneAttr.setValue,
             onDoneChanged: doneAttr.onChange,
-            setText:       textAttr.setValue,
+            setText:       decoratedValue,
             getText:       textAttr.getValue().getValue,
             onTextChanged: textAttr.getValue().onChange,
             getErrorMsg: textAttr.getError
