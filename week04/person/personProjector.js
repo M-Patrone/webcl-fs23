@@ -19,7 +19,7 @@ const bindTextInput = (textAttr, inputElement) => {
         : inputElement.setAttribute("readonly", true));
 
     // todo: the label property should be shown as a pop-over on the text element.
-
+    textAttr.getObs(LABEL, 'TestManuel').onChange(l => inputElement.setAttribute("placeholder", l));
 };
 
 const personTextProjector = textAttr => {
@@ -40,10 +40,12 @@ const personListItemProjector = (masterController, selectionController, rootElem
     deleteButton.innerHTML  = "&times;";
     deleteButton.onclick    = _ => masterController.removePerson(person);
 
-    const firstnameInputElement = null; // todo create the input fields and bind to the attribute props
-    const lastnameInputElement  = null;
+    const firstnameInputElement = personTextProjector(person.firstname)  // todo create the input fields and bind to the attribute props
+    const lastnameInputElement  = personTextProjector(person.lastname);
 
     // todo: when a line in the master view is clicked, we have to set the selection
+    firstnameInputElement.onfocus = ()=>selectionController.setSelectedPerson(person);
+    lastnameInputElement.onfocus = ()=>selectionController.setSelectedPerson(person);
 
     selectionController.onPersonSelected(
         selected => selected === person
@@ -57,6 +59,7 @@ const personListItemProjector = (masterController, selectionController, rootElem
         rootElement.removeChild(firstnameInputElement);
         rootElement.removeChild(lastnameInputElement);
         // todo: what to do with selection when person was removed?
+        selectionController.clearSelection();
         removeMe();
     } );
 
@@ -64,6 +67,7 @@ const personListItemProjector = (masterController, selectionController, rootElem
     rootElement.appendChild(firstnameInputElement);
     rootElement.appendChild(lastnameInputElement);
     // todo: what to do with selection when person was added?
+    selectionController.setSelectedPerson(person);
 };
 
 const personFormProjector = (detailController, rootElement, person) => {
@@ -72,16 +76,20 @@ const personFormProjector = (detailController, rootElement, person) => {
     divElement.innerHTML = `
     <FORM>
         <DIV class="detail-form">
-            <LABEL for="firstname"></LABEL>
+            <LABEL for="firstname" id="labelFirstname"></LABEL>
             <INPUT TYPE="text" size="20" id="firstname">   
-            <LABEL for="lastname"></LABEL>
+            <LABEL for="lastname" id="labelLastName"></LABEL>
             <INPUT TYPE="text" size="20" id="lastname">   
         </DIV>
     </FORM>`;
 
     // todo: bind text values
-
+    person.firstname.getObs(LABEL,"FIRSTNAME").onChange(l => divElement.querySelector('#labelFirstname').textContent = l);
+    person.lastname.getObs(LABEL, 'LASTNAME')
+        .onChange(l =>divElement.querySelector('#labelLastName').textContent = l);
     // todo: bind label values
+    bindTextInput(person.firstname,divElement.querySelector('#firstname'))
+    bindTextInput(person.lastname,divElement.querySelector('#lastname'))
 
     rootElement.firstChild.replaceWith(divElement); // react - style ;-)
 };
