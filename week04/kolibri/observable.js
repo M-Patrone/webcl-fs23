@@ -41,22 +41,27 @@ export {Observable, ObservableList}
  * obs.setValue("some other value");
  */
 const Observable = value => {
-    const listeners = [];
+    const listeners = new Set();
     return {
         onChange: callback => {
-            listeners.push(callback);
+            listeners.add(callback);
             callback(value, value);
         },
-        getValue: ()       => value,
+        getValue: () => value,
         setValue: newValue => {
-            if (value === newValue) return;
-            const oldValue = value;
-            value = newValue;
-            listeners.forEach(callback => {
-                if (value === newValue) { // pre-ordered listeners might have changed this and thus the callback no longer applies
-                    callback(value, oldValue);
+            if (value !== newValue) {
+                const oldValue = value;
+                value = newValue;
+                if (listeners.size != 0) {
+                    const copyList = [...listeners]
+                    for (let i = 0; i < copyList.length; i++) {
+                        const callback = copyList[i];
+                        if (value === newValue) {
+                            callback(value, oldValue);
+                        }
+                    }
                 }
-            });
+            }
         }
     }
 };
