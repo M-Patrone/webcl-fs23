@@ -5,6 +5,45 @@
     <title>Animation Example</title>
     <style>
 
+        main {
+            --example-height: 50vh;
+            --ball-height: 5em;
+            position: relative;
+            background-color: blue;
+            min-height: var(--example-height);
+        }
+        #ball {
+            position: absolute;
+            left: 50%;
+            background-color: white;
+            width: var(--ball-height);
+            height: var(--ball-height);
+            border-radius: 50%;
+        }
+        #ball:hover {
+            animation: squash linear 2s both alternate infinite;
+
+        }
+
+        @keyframes squash {
+            0% {
+
+                transform:  translateY(0)
+
+
+
+            }
+            80% {
+                transform:    translateY(calc( ( 0.8* ((var(--example-height)) - (var(--ball-height))) ) ))
+                                scaleY(1)
+                                scaleX(1);
+            }
+            100% {
+                transform:    translateY(calc((var(--example-height)) - (var(--ball-height))))
+                                scaleY(0.5)
+                                scaleX(1.5);
+            }
+        }
 
     </style>
 </head>
